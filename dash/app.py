@@ -55,7 +55,7 @@ app.layout = html.Div(id='container', children=[
     ], className='banner', id='header'),
 
     daq.Gauge(
-        id='my-daq-gauge',
+        id='gauge',
         max=20,
         value=6,
         min=-20
@@ -93,7 +93,7 @@ app.layout = html.Div(id='container', children=[
 
 @app.callback(
         [Output('oscope-graph', 'figure'),
-        Output('my-daq-gauge', 'value')],
+        Output('gauge', 'value')],
         [Input('update-data', 'n_intervals')])
 def update_data(value):
     """get live serial data here"""
@@ -106,7 +106,7 @@ def update_data(value):
         gz = 0
         pass
 
-    #TODO parse and except serial input
+    #TODO push data into figure for live chart
     figure = {
         'data': mockdata,
         'layout': go.Layout(
