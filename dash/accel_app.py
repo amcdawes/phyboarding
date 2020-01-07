@@ -7,8 +7,9 @@ import dash_daq as daq
 import plotly.graph_objs as go
 import numpy as np
 import serial
+import serial.tools.list_ports
 
-cpe = serial.Serial("/dev/cu.usbmodem14501", 9600)
+from flask import request
 
 x = np.zeros(100)
 y = np.zeros(100)
@@ -47,6 +48,15 @@ app = dash.Dash()
 app.config['suppress_callback_exceptions'] = True
 
 server = app.server
+
+try:
+    # TODO fill in regexp for CPE hwid
+    devices = serial.tools.list_ports.grep("adafruit", include_links=False)
+    cpe = serial.Serial(next(devices), 9600) # assumes only one CPE
+except Exception as e:
+    print(e)
+    print("No adafruit boards found")
+    # TODO display this warning in the app
 
 app.layout = html.Div(id='container', children=[
     html.Div([
@@ -124,6 +134,21 @@ def update_data(value):
             plot_bgcolor='#F3F6FA',)
     }
     return figure, gz
+
+
+# Allow shutdown of server:
+def shutdown_server():
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func is None:
+        raise RuntimeError('Not running with the Werkzeug Server')
+    func()
+
+# to allow POST request to shutdown the server:
+# TODO add a button in the app?
+@server.route('/shutdown', methods=['POST'])
+def shutdown():
+    shutdown_server()
+    return 'Server shutting down...'
 
 
 if __name__ == '__main__':
