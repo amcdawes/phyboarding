@@ -31,9 +31,8 @@ void loop() {
   leftButtonPressed = CircuitPlayground.leftButton();
   rightButtonPressed = CircuitPlayground.rightButton();
 
-  //Serial.print("Left Button: ");
   if (leftButtonPressed) {
-    Serial.print("\n Armed: release to begin collection \n");
+    Serial.print("\nArmed: release to begin collection \n");
     CircuitPlayground.setPixelColor(0, 255,   0,   0);
     while( CircuitPlayground.leftButton() ){
       // wait while button is held
@@ -41,31 +40,25 @@ void loop() {
     }
     // begin logging after release
     CircuitPlayground.setPixelColor(0, 0,   255,   0);
-    Serial.print("\n Active: collecting data \n");
+    Serial.print("\nActive: collecting data \n");
     for (int i = 0; i<LENGTH; i++){
       data[i] = CircuitPlayground.motionX();
       delay(DELAY);
     }
-    Serial.print("\n Data saved \n");
+    Serial.print("\nData saved \n");
     CircuitPlayground.setPixelColor(9, 0,   255,   0); // Data available
     CircuitPlayground.setPixelColor(0, 0, 0, 0); // Clear active LED
-  } else {
-    //Serial.print("L  UP\n");
   }
-  //Serial.print("   Right Button: ");
   if (rightButtonPressed) {
     CircuitPlayground.setPixelColor(9, 0, 30, 0); // old data still available
     // Read out the data
-    //Serial.print("DOWN");
-    Serial.print("DATA: "); // TODO: do I want these tags?
+    Serial.print("DATA\n"); // TODO: do I want these tags?
     for (int i = 0; i<LENGTH; i++){
       Serial.print(data[i]);
-      Serial.print("\n");
+      Serial.print(" ");
     }
-    //Serial.print(" :END\n");
-  } else {
-    Serial.print("  UP");    
+    Serial.print("\nEND\n");
   }
   
-  delay(100);
+  delay(100); // global loop delay, check buttons every 100ms
 }
