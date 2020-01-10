@@ -7,9 +7,26 @@ import dash_daq as daq
 import plotly.graph_objs as go
 import numpy as np
 import serial
-import serial.tools.list_ports
+from serial.tools import list_ports
+
+from ardu_accel import get_data
 
 from flask import request
+
+
+try:
+    for port in list_ports.comports():
+        if port.description == "Circuit Playground Express":
+            cpe_device = port.device
+            print("Adafruit board found: " + cpe_device)
+
+    cpe = serial.Serial(cpe_device)
+except Exception as e:
+    print(e)
+    print("Unable to locate Circuit Playground Express")
+    raise
+    # TODO display this warning in the app and handle it better
+
 
 x = np.zeros(100)
 y = np.zeros(100)
@@ -49,14 +66,7 @@ app.config['suppress_callback_exceptions'] = True
 
 server = app.server
 
-try:
-    # TODO fill in regexp for CPE hwid
-    devices = serial.tools.list_ports.grep("adafruit", include_links=False)
-    cpe = serial.Serial(next(devices), 9600) # assumes only one CPE
-except Exception as e:
-    print(e)
-    print("No adafruit boards found")
-    # TODO display this warning in the app
+
 
 app.layout = html.Div(id='container', children=[
     html.Div([
@@ -80,12 +90,12 @@ app.layout = html.Div(id='container', children=[
                        'titlefont': dict(
                            family='Dosis',
                            size=15,
-                       )},
+                       ), 'autorange': False, 'range': [0, 10]},
                 yaxis={'title': 'Voltage (mV)', 'color': '#506784',
                        'titlefont': dict(
                            family='Dosis',
                            size=15,
-                        ), 'autorange': False, 'range': [-10, 10]},
+                        ), 'autorange': False, 'range': [-20, 20]},
                 margin={'l': 40, 'b': 40, 't': 0, 'r': 50},
                 plot_bgcolor='#F3F6FA',
             )
@@ -98,38 +108,41 @@ app.layout = html.Div(id='container', children=[
                                            'hoverClosestCartesian',
                                            'hoverCompareCartesian']}
     ),
-    dcc.Interval(id='update-data', interval=100, n_intervals=0),
+    dcc.Interval(id='update-data', interval=200, n_intervals=0),
 ])
 
+# Callback means this fuction will get triggered by the interval timer
+# And the output of the function will be sent to the oscope-graph
 @app.callback(
         [Output('oscope-graph', 'figure'),
         Output('gauge', 'value')],
         [Input('update-data', 'n_intervals')])
 def update_data(value):
-    """get live serial data here"""
-    try:
-        rl = ReadLine(cpe)
-        serialin = rl.readline()
-        gz = float(serialin.decode('utf-8').split(" ")[7])
-        print(gz)
-    except (serial.SerialException, IndexError):
-        gz = 0
-        pass
+    """get live serial data"""
+    # try:
+    #     rl = ReadLine(cpe)
+    #     serialin = rl.readline()
+    #     gz = float(serialin.decode('utf-8').split(" ")[5])
+    #     print(gz)
+    # except (serial.SerialException, IndexError):
+    #     gz = 0
+    #     pass
+    gz = 0
 
     #TODO push data into figure for live chart
     figure = {
-        'data': mockdata,
+        'data': get_data(cpe),
         'layout': go.Layout(
-            xaxis={'title': 's', 'color': '#506784',
+            xaxis={'title': 'X-accel (g)', 'color': '#506784',
                    'titlefont': dict(
                        family='Dosis',
                        size=15,
-                   )},
-            yaxis={'title': 'Voltage (mV)', 'color': '#506784',
+                   ), 'autorange': False, 'range': [0, 10]},
+            yaxis={'title': 'Y-accel (g)', 'color': '#506784',
                    'titlefont': dict(
                        family='Dosis',
                        size=15,
-                   ), 'autorange': False, 'range': [-10, 10]},
+                   ), 'autorange': False, 'range': [-20, 20]},
             margin={'l': 40, 'b': 40, 't': 0, 'r': 50},
             plot_bgcolor='#F3F6FA',)
     }
