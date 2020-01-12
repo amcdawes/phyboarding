@@ -1,6 +1,6 @@
 # A Dash app for displaying light levels from a Circuit Playground Express
 # Be sure CPE is running firmware from the lightsense folder
-# TODO: patch in actual data (still mock data for now)
+# TODO: add stop button and auto-scale enable/disable toggles
 
 import dash
 from dash.dependencies import Output, Input
@@ -10,6 +10,10 @@ import plotly
 import random
 import plotly.graph_objs as go
 from collections import deque
+
+from cpe_device import CPEdevice
+
+mycpe = CPEdevice()
 
 X = deque(maxlen=20)
 X.append(1)
@@ -26,7 +30,7 @@ default_layout=go.Layout(
            'titlefont': dict(
                family='Dosis',
                size=15,
-            ), 'autorange': False, 'range': [0, 10]},
+            ), 'autorange': True},
     margin={'l': 40, 'b': 40, 't': 0, 'r': 50},
     plot_bgcolor='#F3F6FA',
 )
@@ -55,7 +59,7 @@ def update_graph_scatter(value):
     # TODO: This is where real data input goes!
     X.append(X[-1]+1)
     # Replace this with the real value from the serial port:
-    Y.append(Y[-1]+Y[-1]*random.uniform(-0.1,0.1))
+    Y.append(mycpe.get_data())
 
     data = plotly.graph_objs.Scatter(
             x=list(X),
