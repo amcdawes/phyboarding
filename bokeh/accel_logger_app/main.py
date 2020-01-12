@@ -5,10 +5,12 @@
 
 import numpy as np
 
-from bokeh.driving import count
+#from bokeh.driving import count
 from bokeh.layouts import column, gridplot, row
-from bokeh.models import ColumnDataSource, Select, Slider
+from bokeh.models import ColumnDataSource, Select, Slider, Span
 from bokeh.plotting import curdoc, figure
+
+from bokeh.models.tools import HoverTool
 
 import serial
 from serial.tools import list_ports
@@ -31,12 +33,35 @@ p = figure(plot_height=500, tools="xpan,xwheel_zoom,xbox_zoom,reset")
 # p.x_range.follow_interval = 500
 # p.x_range.range_padding = 0
 
-p.line(x='period', y='ax', alpha=0.8, line_width=2, color='orange', source=source)
+p.line(x='period', y='ay', alpha=0.8, line_width=2, color='orange', source=source)
 
-mean = Slider(title="mean", value=0, start=-0.01, end=0.01, step=0.001)
-stddev = Slider(title="stddev", value=0.04, start=0.01, end=0.1, step=0.01)
+m1 = Slider(title="Mark 1", value=10, start=0, end=2500, step=1)
+m2 = Slider(title="Mark 2", value=2490, start=0, end=2500, step=1)
 
-def _get_data(t):
+# hover = HoverTool()
+# hover.tooltips=[
+#     ('time', 'period'),
+#     ('accel', 'ax'),
+# ]
+
+hover = HoverTool(
+    tooltips=[
+        ( 'time',   '@period{%0.2f}'            ),
+        ( 'accel',  '@ay{%0.2f}' )
+    ],
+
+    formatters={
+        'period'      : 'printf', # use 'datetime' formatter for 'date' field
+        'ay' : 'printf'   # use 'printf' formatter for 'adj close' field
+    },
+
+    # display a tooltip whenever the cursor is vertically in line with a glyph
+    mode='vline'
+)
+
+p.add_tools(hover)
+
+def _get_data():
     """ read data from arduino """
     while(True):
         line = cpe.readline()
@@ -57,9 +82,24 @@ def _get_data(t):
 
     return period, ax, ay, az
 
-@count()
-def update(t):
-    period, ax, ay, az = _get_data(t)
+def update_markers(attrname, old, new):
+    # Get the current slider values
+    mark1 = m1.value
+    mark2 = m2.value
+    ml1 = Span(location=mark1, dimension='height', line_color='red', line_width=3)
+    ml2 = Span(location=mark2, dimension='height', line_color='blue', line_width=3)
+    # add vertical lines to plot at mark1 and mark2
+    p.renderers.extend([ml1, ml2])
+    print('updated')
+
+# Add on_change listener to each widget that we're using:
+for w in [m1, m2]:
+    w.on_change('value', update_markers)
+
+
+#@count()
+def update():
+    period, ax, ay, az = _get_data()
 
     # new_data = dict(
     #     period=[period],
@@ -70,6 +110,9 @@ def update(t):
 
     source.data = dict(ax=ax, ay=ay, az=az, period=period)
 
-curdoc().add_root(column(row(mean, stddev), gridplot([[p]], toolbar_location="left", plot_width=1000)))
+
+curdoc().add_root(column(row(m1, m2), gridplot([[p]], toolbar_location="left", plot_width=1000)))
 curdoc().add_periodic_callback(update, 500) # This was originally too fast? was 50
+# TODO sort out the two callbacks: sliders and periodic. Another way to
+# test for new data?
 curdoc().title = "Live Arduino"

@@ -1,3 +1,5 @@
+# Test script to locate and print output from Circuit Playground Express
+
 import serial
 from serial.tools import list_ports
 
