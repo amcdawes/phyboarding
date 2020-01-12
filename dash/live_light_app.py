@@ -1,3 +1,7 @@
+# A Dash app for displaying light levels from a Circuit Playground Express
+# Be sure CPE is running firmware from the lightsense folder
+# TODO: patch in actual data (still mock data for now)
+
 import dash
 from dash.dependencies import Output, Input
 import dash_core_components as dcc
@@ -48,7 +52,9 @@ app.layout = html.Div(
 @app.callback(Output('the-graph', 'figure'),
               [Input('do-update', 'n_intervals')])
 def update_graph_scatter(value):
+    # TODO: This is where real data input goes!
     X.append(X[-1]+1)
+    # Replace this with the real value from the serial port:
     Y.append(Y[-1]+Y[-1]*random.uniform(-0.1,0.1))
 
     data = plotly.graph_objs.Scatter(

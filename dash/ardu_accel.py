@@ -1,9 +1,10 @@
 import serial
 from serial.tools import list_ports
 
-# rewrite this to read the arduino data
+# An interface script for reading accelerometer data from Circuit Playground Express
+# Be sure CPE is running the firmware from the accelerometer folder
 
-# create a class for reading from the arduino?
+# TODO: create a class for reading from the arduino?
 
 
 def get_data(cpe):
