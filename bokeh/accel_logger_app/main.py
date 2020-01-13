@@ -4,8 +4,6 @@
 # run with `bokeh serve arduinolive`
 
 import numpy as np
-
-#from bokeh.driving import count
 from bokeh.layouts import column, gridplot, row
 from bokeh.models import ColumnDataSource, Select, Slider, Span, Paragraph
 from bokeh.plotting import curdoc, figure
@@ -31,16 +29,13 @@ source = ColumnDataSource(dict(
 p = figure(plot_height=500, tools="xbox_select,xpan,xbox_zoom,reset")
 
 box_select = p.select_one(BoxSelectTool)
-#box_select.overlay.fill_color = "firebrick"
-#box_select.overlay.line_color = None
-# TODO get data from box_select (see callbacks further below)
 
 p.line(x='period', y='ay', alpha=0.8, line_width=2, color='orange', source=source)
 p.scatter(x='period', y='ay', color='orange', source=source)
 
 m1 = Slider(title="Mark 1", value=10, start=0, end=2500, step=1)
 m2 = Slider(title="Mark 2", value=2490, start=0, end=2500, step=1)
-period = Paragraph(text="Period: ", width=100, height=80)
+period_readout = Paragraph(text="Period: ", width=400, height=80,  style={'font-size': '200%'})
 
 hover = HoverTool(
     tooltips=[
@@ -63,6 +58,7 @@ def _get_data():
     """ read data from arduino """
     line = cpe.readline()
     if(line == b'DATA\n'):
+        # New data is available, read it:
         #print("reading data line")
         datastring = cpe.readline()
         data = datastring.split(b' ')[:-1] # strip last newline char
@@ -74,45 +70,33 @@ def _get_data():
         ay = ax
         az = ax
     else:
+        # Don't change the data
         # TODO find a cleaner way to handle this
         period = source.data['period']
         ax = source.data['ax']
         ay = ax
         az = ax
 
-    #period = source.data['period'][-1] + 0.1
-    #ax, ay, az = np.random.random(),np.random.random(),np.random.random()
-
     return period, ax, ay, az
 
-
-
-
-#@count()
 def update():
     #print("called update")
     period, ax, ay, az = _get_data()
-
-    # new_data = dict(
-    #     period=[period],
-    #     ax=[ax],
-    #     ay=[ay],
-    #     az=[az],
-    # )
-
     source.data = dict(ax=ax, ay=ay, az=az, period=period)
 
 
 def selection_handler(attrname, old, new):
-    selectionIndex=source.selected.indices[0]
-    print("you have selected the row "+str(selectionIndex))
-    # TODO try and make this show the range of time selected
+    selection=source.selected.indices
+    sel_data = [source.data['period'][i] for i in selection] # Use time data
+    calculated_period = max(sel_data) - min(sel_data)
+    #print(calculated_period)
+    period_readout.text = "Period: {0:.2f} ms".format(calculated_period)
 
 source.selected.on_change('indices', selection_handler)
 
 #curdoc().add_root(column(row(m1, m2), gridplot([[p]], toolbar_location="left", plot_width=1000)))
 curdoc().add_root(column(gridplot([[p]], toolbar_location="left", plot_width=1000)))
-curdoc().add_root(row(period, width=1000))
+curdoc().add_root(row(period_readout, width=1000))
 curdoc().add_periodic_callback(update, 500) # This was originally too fast? was 50
 # TODO sort out the two callbacks: sliders and periodic. Another way to
 # test for new data?
