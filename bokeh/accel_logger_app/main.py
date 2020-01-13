@@ -7,7 +7,7 @@ import numpy as np
 
 #from bokeh.driving import count
 from bokeh.layouts import column, gridplot, row
-from bokeh.models import ColumnDataSource, Select, Slider, Span
+from bokeh.models import ColumnDataSource, Select, Slider, Span, Paragraph
 from bokeh.plotting import curdoc, figure
 
 from bokeh.models.tools import HoverTool, BoxSelectTool
@@ -20,7 +20,7 @@ for port in list_ports.comports():
         cpe_device = port.device
 
 print(cpe_device)
-cpe = serial.Serial(cpe_device, timeout=0.25) # trying zero timeout
+cpe = serial.Serial(cpe_device, timeout=0.05) # zero timeout doesn't catch data
 
 np.random.seed(1)
 
@@ -31,8 +31,8 @@ source = ColumnDataSource(dict(
 p = figure(plot_height=500, tools="xbox_select,xpan,xbox_zoom,reset")
 
 box_select = p.select_one(BoxSelectTool)
-box_select.overlay.fill_color = "firebrick"
-box_select.overlay.line_color = None
+#box_select.overlay.fill_color = "firebrick"
+#box_select.overlay.line_color = None
 # TODO get data from box_select (see callbacks further below)
 
 p.line(x='period', y='ay', alpha=0.8, line_width=2, color='orange', source=source)
@@ -40,7 +40,7 @@ p.scatter(x='period', y='ay', color='orange', source=source)
 
 m1 = Slider(title="Mark 1", value=10, start=0, end=2500, step=1)
 m2 = Slider(title="Mark 2", value=2490, start=0, end=2500, step=1)
-
+period = Paragraph(text="Period: ", width=100, height=80)
 
 hover = HoverTool(
     tooltips=[
@@ -61,20 +61,24 @@ p.add_tools(hover)
 
 def _get_data():
     """ read data from arduino """
-    # TODO: make this non-blocking with short timeout and only save new data
-    while(True):
-        line = cpe.readline()
-        if(line == b'DATA\n'):
-            datastring = cpe.readline()
-            data = datastring.split(b' ')[:-1] # strip last newline char
-            datafloats = [float(i) for i in data]
-            #print(datafloats)
+    line = cpe.readline()
+    if(line == b'DATA\n'):
+        #print("reading data line")
+        datastring = cpe.readline()
+        data = datastring.split(b' ')[:-1] # strip last newline char
+        datafloats = [float(i) for i in data]
+        #print(datafloats)
 
-            period = np.linspace(0,2500,500)
-            ax = datafloats
-            ay = ax
-            az = ax
-            break
+        period = np.linspace(0,2500,500)
+        ax = datafloats
+        ay = ax
+        az = ax
+    else:
+        # TODO find a cleaner way to handle this
+        period = source.data['period']
+        ax = source.data['ax']
+        ay = ax
+        az = ax
 
     #period = source.data['period'][-1] + 0.1
     #ax, ay, az = np.random.random(),np.random.random(),np.random.random()
@@ -86,6 +90,7 @@ def _get_data():
 
 #@count()
 def update():
+    #print("called update")
     period, ax, ay, az = _get_data()
 
     # new_data = dict(
@@ -100,13 +105,14 @@ def update():
 
 def selection_handler(attrname, old, new):
     selectionIndex=source.selected.indices[0]
-    print("you have selected the row nr "+str(selectionIndex))
+    print("you have selected the row "+str(selectionIndex))
     # TODO try and make this show the range of time selected
 
 source.selected.on_change('indices', selection_handler)
 
 #curdoc().add_root(column(row(m1, m2), gridplot([[p]], toolbar_location="left", plot_width=1000)))
 curdoc().add_root(column(gridplot([[p]], toolbar_location="left", plot_width=1000)))
+curdoc().add_root(row(period, width=1000))
 curdoc().add_periodic_callback(update, 500) # This was originally too fast? was 50
 # TODO sort out the two callbacks: sliders and periodic. Another way to
 # test for new data?
