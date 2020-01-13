@@ -10,7 +10,7 @@ from bokeh.layouts import column, gridplot, row
 from bokeh.models import ColumnDataSource, Select, Slider, Span
 from bokeh.plotting import curdoc, figure
 
-from bokeh.models.tools import HoverTool
+from bokeh.models.tools import HoverTool, BoxSelectTool
 
 import serial
 from serial.tools import list_ports
@@ -20,7 +20,7 @@ for port in list_ports.comports():
         cpe_device = port.device
 
 print(cpe_device)
-cpe = serial.Serial(cpe_device)
+cpe = serial.Serial(cpe_device, timeout=0.25) # trying zero timeout
 
 np.random.seed(1)
 
@@ -28,21 +28,19 @@ source = ColumnDataSource(dict(
     period=[0], ax=[0], ay=[0], az=[0]
 ))
 
-p = figure(plot_height=500, tools="xpan,xwheel_zoom,xbox_zoom,reset")
-# p.x_range.follow = "end"
-# p.x_range.follow_interval = 500
-# p.x_range.range_padding = 0
+p = figure(plot_height=500, tools="xbox_select,xpan,xbox_zoom,reset")
+
+box_select = p.select_one(BoxSelectTool)
+box_select.overlay.fill_color = "firebrick"
+box_select.overlay.line_color = None
+# TODO get data from box_select (see callbacks further below)
 
 p.line(x='period', y='ay', alpha=0.8, line_width=2, color='orange', source=source)
+p.scatter(x='period', y='ay', color='orange', source=source)
 
 m1 = Slider(title="Mark 1", value=10, start=0, end=2500, step=1)
 m2 = Slider(title="Mark 2", value=2490, start=0, end=2500, step=1)
 
-# hover = HoverTool()
-# hover.tooltips=[
-#     ('time', 'period'),
-#     ('accel', 'ax'),
-# ]
 
 hover = HoverTool(
     tooltips=[
@@ -63,6 +61,7 @@ p.add_tools(hover)
 
 def _get_data():
     """ read data from arduino """
+    # TODO: make this non-blocking with short timeout and only save new data
     while(True):
         line = cpe.readline()
         if(line == b'DATA\n'):
@@ -82,19 +81,7 @@ def _get_data():
 
     return period, ax, ay, az
 
-def update_markers(attrname, old, new):
-    # Get the current slider values
-    mark1 = m1.value
-    mark2 = m2.value
-    ml1 = Span(location=mark1, dimension='height', line_color='red', line_width=3)
-    ml2 = Span(location=mark2, dimension='height', line_color='blue', line_width=3)
-    # add vertical lines to plot at mark1 and mark2
-    p.renderers.extend([ml1, ml2])
-    print('updated')
 
-# Add on_change listener to each widget that we're using:
-for w in [m1, m2]:
-    w.on_change('value', update_markers)
 
 
 #@count()
@@ -111,8 +98,19 @@ def update():
     source.data = dict(ax=ax, ay=ay, az=az, period=period)
 
 
-curdoc().add_root(column(row(m1, m2), gridplot([[p]], toolbar_location="left", plot_width=1000)))
+def selection_handler(attrname, old, new):
+    selectionIndex=source.selected.indices[0]
+    print("you have selected the row nr "+str(selectionIndex))
+    # TODO try and make this show the range of time selected
+
+source.selected.on_change('indices', selection_handler)
+
+#curdoc().add_root(column(row(m1, m2), gridplot([[p]], toolbar_location="left", plot_width=1000)))
+curdoc().add_root(column(gridplot([[p]], toolbar_location="left", plot_width=1000)))
 curdoc().add_periodic_callback(update, 500) # This was originally too fast? was 50
 # TODO sort out the two callbacks: sliders and periodic. Another way to
 # test for new data?
+
+# One option is to set the readline timeout short and just try for new data every 500 ms
+# with the periodic update
 curdoc().title = "Live Arduino"
