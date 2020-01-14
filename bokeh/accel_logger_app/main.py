@@ -27,6 +27,8 @@ source = ColumnDataSource(dict(
 ))
 
 p = figure(plot_height=500, tools="xbox_select,xpan,xbox_zoom,reset")
+p.xaxis.major_label_text_font_size = "175%"
+p.yaxis.major_label_text_font_size = "175%"
 
 box_select = p.select_one(BoxSelectTool)
 
@@ -35,7 +37,7 @@ p.scatter(x='period', y='ay', color='orange', source=source)
 
 m1 = Slider(title="Mark 1", value=10, start=0, end=2500, step=1)
 m2 = Slider(title="Mark 2", value=2490, start=0, end=2500, step=1)
-period_readout = Paragraph(text="Period: ", width=400, height=80,  style={'font-size': '200%'})
+period_readout = Paragraph(text="Period: ", width=400, height=80,  style={'font-size': '175%'})
 
 hover = HoverTool(
     tooltips=[
