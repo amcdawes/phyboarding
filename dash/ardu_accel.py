@@ -11,7 +11,7 @@ def get_data(cpe):
     """collect data from ser_dev
     single value of z-accel"""
     az = []
-    for i in range(10):
+    for i in range(10): # read 10 values and append
         cpe.reset_input_buffer()
         next = cpe.readline()
         az.append(float(next.decode("ascii"))) # TODO wrap in TRY?

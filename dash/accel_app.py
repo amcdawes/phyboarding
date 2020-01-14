@@ -6,27 +6,30 @@ import dash_daq as daq
 
 import plotly.graph_objs as go
 import numpy as np
-import serial
-from serial.tools import list_ports
+# import serial
+# from serial.tools import list_ports
 
-from ardu_accel import get_data
+#from ardu_accel import get_data
+from cpe_device import CPEdevice
+
+mycpe = CPEdevice()
 
 from flask import request
 
 
-try:
-    for port in list_ports.comports():
-        if port.description == "Circuit Playground Express":
-            cpe_device = port.device
-            print("Adafruit board found: " + cpe_device)
-
-    cpe = serial.Serial(cpe_device)
-except Exception as e:
-    print(e)
-    print("Unable to locate Circuit Playground Express")
-    raise
-    # TODO display this warning in the app and handle it better
-
+# try:
+#     for port in list_ports.comports():
+#         if port.description == "Circuit Playground Express":
+#             cpe_device = port.device
+#             print("Adafruit board found: " + cpe_device)
+#
+#     cpe = serial.Serial(cpe_device)
+# except Exception as e:
+#     print(e)
+#     print("Unable to locate Circuit Playground Express")
+#     raise
+#     # TODO display this warning in the app and handle it better
+#
 
 x = np.zeros(100)
 y = np.zeros(100)
@@ -37,36 +40,34 @@ mockdata = [{'x': x,
   'colorscale': [[0, 'rgba(255, 255, 255,0)'], [1, 'rgba(0,0,255,1)']]}]
 
 
-class ReadLine:
-    """ from https://github.com/pyserial/pyserial/issues/216#issuecomment-369414522 """
-    def __init__(self, s):
-        self.buf = bytearray()
-        self.s = s
-
-    def readline(self):
-        i = self.buf.find(b"\n")
-        if i >= 0:
-            r = self.buf[:i+1]
-            self.buf = self.buf[i+1:]
-            return r
-        while True:
-            i = max(1, min(2048, self.s.in_waiting))
-            data = self.s.read(i)
-            i = data.find(b"\n")
-            if i >= 0:
-                r = self.buf + data[:i+1]
-                self.buf[0:] = data[i+1:]
-                return r
-            else:
-                self.buf.extend(data)
+# class ReadLine:
+#     """ from https://github.com/pyserial/pyserial/issues/216#issuecomment-369414522 """
+#     def __init__(self, s):
+#         self.buf = bytearray()
+#         self.s = s
+#
+#     def readline(self):
+#         i = self.buf.find(b"\n")
+#         if i >= 0:
+#             r = self.buf[:i+1]
+#             self.buf = self.buf[i+1:]
+#             return r
+#         while True:
+#             i = max(1, min(2048, self.s.in_waiting))
+#             data = self.s.read(i)
+#             i = data.find(b"\n")
+#             if i >= 0:
+#                 r = self.buf + data[:i+1]
+#                 self.buf[0:] = data[i+1:]
+#                 return r
+#             else:
+#                 self.buf.extend(data)
 
 app = dash.Dash()
 
-app.config['suppress_callback_exceptions'] = True
+app.config['suppress_callback_exceptions'] = False
 
 server = app.server
-
-
 
 app.layout = html.Div(id='container', children=[
     html.Div([
@@ -127,11 +128,11 @@ def update_data(value):
     # except (serial.SerialException, IndexError):
     #     gz = 0
     #     pass
-    gz = 0
+    gz = mycpe.get_data()
 
     #TODO push data into figure for live chart
     figure = {
-        'data': get_data(cpe),
+        'data': mycpe.get_data_array(),
         'layout': go.Layout(
             xaxis={'title': 'X-accel (g)', 'color': '#506784',
                    'titlefont': dict(
