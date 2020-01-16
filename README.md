@@ -1,12 +1,16 @@
 # Physics Dashboards
-## Open
+## Open tools for physics data display and analysis
 
 In-class hands-on data collection and display facilitated by open-source hardware and software tools. Presented at AAPT Winter Meeting 2020.
 
-Installation is easiest using the Anaconda Distribution. Once that environment is installed, use conda to create an environment that includes the necessary requirements:
+### Install python:
+Installation is easiest using the [Anaconda Distribution](https://www.anaconda.com/distribution/). Once that distribution is installed, use conda to create a virtual environment that includes the necessary requirements:
 
-### create an env:
+### Create a virtual environment:
 `conda create -f environment.yml`
+
+### Activate your new venv:
+`conda activate phyboard`
 
 To roll your own installation, clone this repository and install the following required packages:
  - python 3 (It's 2020 folks, time to use 3)
