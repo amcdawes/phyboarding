@@ -3,6 +3,10 @@
 
 In-class hands-on data collection and display facilitated by open-source hardware and software tools. Presented at AAPT Winter Meeting 2020.
 
+Slides from that talk are available in the PDF file AAPTWM2020.pdf.
+
+Hardware used for this work is the [Adafruit Circuit Playground Express](https://www.adafruit.com/product/3333).
+
 ### Install python:
 Installation is easiest using the [Anaconda Distribution](https://www.anaconda.com/distribution/). Once that distribution is installed, use conda to create a virtual environment that includes the necessary requirements:
 
