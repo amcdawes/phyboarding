@@ -1,3 +1,7 @@
+// A simple 1-D real-time acceleration Sensor
+// This is used in the dash example accel_app.py
+// but as not presented at AAPTWM2020
+
 #include <Adafruit_CircuitPlayground.h>
 
 float X, Y, Z;

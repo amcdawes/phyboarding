@@ -1,12 +1,18 @@
 // Accelerometer data collection
-// AMCDawes 2020, for physics dashboarding talk at AAPT WM
-// Based on Hello_Accelerometer and Hello_Buttons examples
+
+// Upload this to an Adafruit Circuit Playground Express
+// using the Arduino IDE. This code is designed to be used
+// with Bokeh example accel_logger_app in this repo
+// but it sends plain text via serial interface so many
+// other interfaces could be built.
 
 // Features: Click left button to record y-accel data for LENGTH samples DELAY ms apart
 // Click right button to send data via serial (useful for arduino IDE monitor)
-// Works with Bokeh example accel_logger_app 
- 
+
 // Thanks Adafruit!
+
+// AMCDawes 2020, for physics dashboarding talk at AAPT WM
+// Based on Hello_Accelerometer and Hello_Buttons examples
 
 #include <Adafruit_CircuitPlayground.h>
 #define LENGTH 500
@@ -59,6 +65,6 @@ void loop() {
     }
     Serial.print("\nEND\n");
   }
-  
+
   delay(100); // global loop delay, check buttons every 100ms
 }
